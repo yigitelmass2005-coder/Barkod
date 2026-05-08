@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Auton — Barkod Tarayıcı</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAFAF8;color:#1A1A18;}
 .ekran{display:none;min-height:100vh;}
 .ekran.aktif{display:block;}
 .header{display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border-bottom:.5px solid #E8E6DF;position:sticky;top:0;z-index:10;}
-.header-geri{width:36px;height:36px;border-radius:50%;background:#F1EFE8;border:none;font-size:18px;cursor:pointer;}
+.header-geri{width:36px;height:36px;border-radius:50%;background:#F1EFE8;border:none;font-size:18px;cursor:pointer;flex-shrink:0;}
 .header-baslik{font-size:17px;font-weight:600;}
 .header-badge{margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:99px;background:#E1F5EE;color:#0F6E56;border:.5px solid #5DCAA5;}
 .sayfa{padding:16px;padding-bottom:90px;}
@@ -49,11 +50,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pd-m{background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .pd-m-val{font-size:16px;font-weight:600;}
 .pd-m-lbl{font-size:9px;color:#888780;margin-top:2px;}
-.seclbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#B4B2A9;margin-bottom:10px;padding-bottom:8px;border-bottom:.5px solid #F1EFE8;}
+.seclbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#B4B2A9;margin-bottom:10px;padding-bottom:8px;border-bottom:.5px solid #F1EFE8;margin-top:16px;}
 .besin-ekle-row{display:flex;gap:8px;margin-bottom:12px;}
 .besin-ara-inp{flex:1;height:48px;border:.5px solid #E8E6DF;border-radius:12px;background:#fff;color:#1A1A18;font-size:15px;padding:0 14px;outline:none;}
 .besin-ara-inp:focus{border-color:#1D9E75;}
-.barkod-btn{width:48px;height:48px;border-radius:12px;background:#1A1A18;border:none;cursor:pointer;font-size:22px;flex-shrink:0;}
+.barkod-btn{width:48px;height:48px;border-radius:12px;background:#1A1A18;border:none;cursor:pointer;font-size:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .besin-sonuc-item{display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border-radius:12px;border:.5px solid #E8E6DF;margin-bottom:8px;}
 .bsi-ikon{font-size:22px;flex-shrink:0;}
 .bsi-bilgi{flex:1;}
@@ -67,13 +68,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .eb-makro{font-size:11px;color:#888780;}
 .eb-sil{width:30px;height:30px;border-radius:50%;background:#FCEBEB;border:none;cursor:pointer;color:#A32D2D;font-size:16px;flex-shrink:0;}
 
-/* BARKOD EKRANI */
+/* BARKOD */
 #barkod-ekran{position:fixed;inset:0;background:#000;z-index:500;display:none;flex-direction:column;}
 #barkod-ekran.aktif{display:flex;}
-#video-container{flex:1;position:relative;overflow:hidden;}
-#kamera-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-#kamera-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;}
-.bk-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;}
+#qr-reader{flex:1;width:100%;position:relative;overflow:hidden;background:#000;}
+#qr-reader video{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;object-fit:cover!important;}
+#qr-reader img{display:none!important;}
+#qr-reader>div:first-child{display:none!important;}
+#qr-reader__scan_region{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;}
+#qr-reader__scan_region>img{display:none!important;}
+.bk-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;z-index:10;}
 .bk-cerceve{width:260px;height:160px;position:relative;}
 .bk-k1{position:absolute;top:0;left:0;width:30px;height:30px;border-top:3px solid #1D9E75;border-left:3px solid #1D9E75;}
 .bk-k2{position:absolute;top:0;right:0;width:30px;height:30px;border-top:3px solid #1D9E75;border-right:3px solid #1D9E75;}
@@ -82,9 +86,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bk-laser{position:absolute;left:8px;right:8px;height:2px;background:linear-gradient(90deg,transparent,#1D9E75,transparent);animation:laser 1.8s ease-in-out infinite;}
 @keyframes laser{0%{top:8px;}50%{top:calc(100% - 8px);}100%{top:8px;}}
 .bk-yazi{color:rgba(255,255,255,.7);font-size:13px;margin-top:16px;text-align:center;}
-.barkod-alt{padding:20px;background:#000;display:flex;flex-direction:column;gap:8px;}
-.barkod-status{color:rgba(255,255,255,.55);font-size:12px;text-align:center;min-height:18px;}
-.barkod-kapat-btn{width:100%;height:50px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:14px;font-size:15px;cursor:pointer;font-family:inherit;}
+.barkod-alt{padding:20px;background:#000;flex-shrink:0;}
+.barkod-status{color:rgba(255,255,255,.6);font-size:12px;text-align:center;margin-bottom:12px;min-height:18px;}
+.barkod-kapat-btn{width:100%;height:50px;background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:14px;font-size:15px;cursor:pointer;font-family:inherit;}
 
 /* SHEET */
 .sheet-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:none;align-items:flex-end;justify-content:center;}
@@ -108,29 +112,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .m-field input:focus{border-color:#1D9E75;}
 .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .iptal-btn{width:100%;height:46px;background:transparent;border:none;color:#888780;cursor:pointer;font-family:inherit;font-size:14px;margin-top:8px;}
-
-/* YÜKLENİYOR */
 .yk{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
 .yk.show{display:flex;}
 .yk-sp{width:48px;height:48px;border:3px solid rgba(255,255,255,.2);border-top-color:#1D9E75;border-radius:50%;animation:spin 700ms linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .yk-lbl{color:#fff;font-size:15px;font-weight:500;}
 .yk-sub{color:rgba(255,255,255,.55);font-size:12px;text-align:center;padding:0 20px;}
-
-/* TOAST */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A18;color:#fff;padding:12px 22px;border-radius:99px;font-size:13px;font-weight:500;opacity:0;transition:all 300ms ease;z-index:800;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 
-<!-- MENÜ -->
 <div class="menu">
   <button class="menu-btn" id="mb-anasayfa" onclick="menuGit('anasayfa')"><span class="menu-ikon">🏠</span><span class="menu-lbl">Ana Sayfa</span></button>
   <button class="menu-btn aktif" id="mb-diyetlerim" onclick="menuGit('diyetlerim')"><span class="menu-ikon">📋</span><span class="menu-lbl">Diyetlerim</span></button>
 </div>
 
-<!-- ANASAYFA -->
 <div class="ekran" id="e-anasayfa">
   <div class="header"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;"></div><span style="font-size:14px;font-weight:600;">Diyet Planlayıcı</span></div></div>
   <div class="sayfa">
@@ -144,12 +142,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="pk-bilgi"><div class="pk-bilgi-lbl">Hedef</div><div class="pk-bilgi-val" style="font-size:13px;">📉 Kilo verme</div></div>
       </div>
       <div class="pk-prog"><div class="pk-prog-fill" style="width:62%"></div></div>
-      <div style="font-size:11px;color:#1D9E75;font-weight:500;">%62 · 📷 Besin ekle</div>
     </div>
   </div>
 </div>
 
-<!-- DİYETLERİM -->
 <div class="ekran aktif" id="e-diyetlerim">
   <div class="header"><div class="header-baslik">Diyetlerim</div></div>
   <div class="sayfa">
@@ -167,7 +163,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- PLAN DETAY -->
 <div class="ekran" id="e-detay">
   <div class="header">
     <button class="header-geri" onclick="menuGit('diyetlerim')">←</button>
@@ -181,22 +176,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="pd-m"><div class="pd-m-val" id="pd-karb" style="color:#1D9E75;">—g</div><div class="pd-m-lbl">Karb</div></div>
       <div class="pd-m"><div class="pd-m-val" id="pd-yag" style="color:#EF9F27;">—g</div><div class="pd-m-lbl">Yağ</div></div>
     </div>
-    <div class="seclbl">Besin Ekle</div>
+    <div class="seclbl" style="margin-top:0;">Besin Ekle</div>
     <div class="besin-ekle-row">
       <input class="besin-ara-inp" type="text" id="besin-ara" placeholder="Besin adı ara..." oninput="besinAra()"/>
       <button class="barkod-btn" onclick="acBarkod()">📷</button>
     </div>
     <div id="besin-ara-sonuc"></div>
-    <div class="seclbl" style="margin-top:16px;">Günlük Besinlerim</div>
+    <div class="seclbl">Günlük Besinlerim</div>
     <div id="eklenen-besinler"></div>
   </div>
 </div>
 
-<!-- BARKOD EKRANI -->
+<!-- BARKOD -->
 <div id="barkod-ekran">
-  <div id="video-container">
-    <video id="kamera-video" autoplay playsinline muted></video>
-    <canvas id="kamera-canvas"></canvas>
+  <div id="qr-reader">
     <div class="bk-overlay">
       <div class="bk-cerceve">
         <div class="bk-k1"></div><div class="bk-k2"></div>
@@ -207,12 +200,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
   <div class="barkod-alt">
-    <div class="barkod-status" id="barkod-status">Kamera başlatılıyor...</div>
+    <div class="barkod-status" id="barkod-status">Başlatılıyor...</div>
     <button class="barkod-kapat-btn" onclick="kapatBarkod()">İptal</button>
   </div>
 </div>
 
-<!-- SONUÇ SHEET -->
+<!-- SONUÇ -->
 <div class="sheet-ov" id="sonuc-ov">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -234,7 +227,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- MANUEL SHEET -->
+<!-- MANUEL -->
 <div class="sheet-ov" id="manuel-ov">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -253,25 +246,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- YÜKLENİYOR -->
 <div class="yk" id="yk">
   <div class="yk-sp"></div>
   <div class="yk-lbl" id="yk-lbl">Sorgulanıyor...</div>
   <div class="yk-sub" id="yk-sub">Lütfen bekleyin</div>
 </div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== VERİ =====
-let PLANLAR = [
+let PLANLAR=[
   {id:1,isim:'Mayıs Planı',tarih:'1 Mayıs 2026',hafta:8,kcal:2264,pro:165,karb:185,yag:78,hedef:'ver',hedefTxt:'Kilo verme',ilerleme:62,durum:'aktif'},
   {id:2,isim:'Nisan Planı',tarih:'1 Nisan 2026',hafta:4,kcal:2100,pro:150,karb:170,yag:70,hedef:'koru',hedefTxt:'Kilo koruma',ilerleme:100,durum:'tamamlandi'},
   {id:3,isim:'Mart Planı',tarih:'1 Mart 2026',hafta:6,kcal:2400,pro:180,karb:200,yag:85,hedef:'al',hedefTxt:'Kilo alma',ilerleme:45,durum:'pasif'},
 ];
-let aktifTab='tumu', eklenmisBesins=[], bekleyenBesin=null;
-let videoStream=null, barkodInterval=null, barkodBulunan=false;
+let aktifTab='tumu',eklenmisBesins=[],bekleyenBesin=null;
+let html5QrCode=null,barkodAktif=false;
 
 const BESIN_DB=[
   {isim:'Yumurta',kcal:155,pro:13,karb:1,yag:11,ikon:'🥚'},
@@ -286,7 +275,6 @@ const BESIN_DB=[
   {isim:'Beyaz peynir',kcal:264,pro:18,karb:0,yag:20,ikon:'🧀'},
 ];
 
-// ===== MENÜ =====
 function menuGit(s){
   ['anasayfa','diyetlerim','detay'].forEach(x=>{
     document.getElementById('e-'+x).classList.toggle('aktif',x===s);
@@ -298,7 +286,6 @@ function menuGit(s){
   if(s==='diyetlerim')renderPlanlar();
 }
 
-// ===== PLANLAR =====
 function planTab(t){
   aktifTab=t;
   ['tumu','aktif','gecmis'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('on',x===t));
@@ -347,12 +334,9 @@ function acDetay(id){
 }
 
 function silPlan(id){
-  if(confirm('Bu planı silmek istiyor musun?')){
-    PLANLAR=PLANLAR.filter(p=>p.id!==id);renderPlanlar();
-  }
+  if(confirm('Silmek istiyor musun?')){PLANLAR=PLANLAR.filter(p=>p.id!==id);renderPlanlar();}
 }
 
-// ===== BESİN ARAMA =====
 function besinAra(){
   const q=document.getElementById('besin-ara').value.trim().toLowerCase();
   const el=document.getElementById('besin-ara-sonuc');
@@ -371,118 +355,100 @@ function besinSecArama(isim,kcal,pro,karb,yag,ikon){
   acSonucSheet({isim,marka:`${kcal} kcal / 100g`,kcal,pro,karb,yag,kaynak:'arama'});
 }
 
-// ===== BARKOD — GERÇEK KAMERA =====
-async function acBarkod(){
-  barkodBulunan=false;
-  const ekran=document.getElementById('barkod-ekran');
-  const video=document.getElementById('kamera-video');
-  const status=document.getElementById('barkod-status');
+// BARKOD
+function acBarkod(){
+  barkodAktif=true;
+  document.getElementById('barkod-ekran').style.display='flex';
+  document.getElementById('barkod-status').textContent='Kamera başlatılıyor...';
 
-  ekran.style.display='flex';
-  status.textContent='Kamera izni isteniyor...';
-
-  try {
-    videoStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
-    });
-    video.srcObject=videoStream;
-    await video.play();
-    status.textContent='Hazır — barkodu çerçeveye tut';
-    baslatBarkodOkuma();
-  } catch(err){
-    status.textContent='Kamera açılamadı: '+err.message;
-    console.error(err);
+  // Önceki instance'ı temizle
+  if(html5QrCode){
+    try{html5QrCode.stop();}catch(e){}
+    try{html5QrCode.clear();}catch(e){}
   }
-}
+  html5QrCode=new Html5Qrcode('qr-reader',{verbose:false});
 
-function baslatBarkodOkuma(){
-  const video=document.getElementById('kamera-video');
-  const canvas=document.getElementById('kamera-canvas');
-  const ctx=canvas.getContext('2d');
+  Html5Qrcode.getCameras().then(cameras=>{
+    if(!cameras||cameras.length===0){
+      document.getElementById('barkod-status').textContent='Kamera bulunamadı';
+      return;
+    }
 
-  // BarcodeDetector API desteği var mı?
-  if('BarcodeDetector' in window){
-    const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39']});
-    document.getElementById('barkod-status').textContent='Hazır — barkodu çerçeveye tut';
-
-    barkodInterval=setInterval(async()=>{
-      if(barkodBulunan||video.readyState<2)return;
-      canvas.width=video.videoWidth;
-      canvas.height=video.videoHeight;
-      ctx.drawImage(video,0,0);
-      try{
-        const barcodes=await detector.detect(canvas);
-        if(barcodes.length>0){
-          barkodBulunan=true;
-          clearInterval(barkodInterval);
-          const barcode=barcodes[0].rawValue;
-          kapatBarkod();
-          await islemBarkod(barcode);
-        }
-      }catch(e){}
-    },500);
-  } else {
-    // BarcodeDetector yok — ZXing yükle
-    document.getElementById('barkod-status').textContent='Tarayıcı yükleniyor...';
-    const script=document.createElement('script');
-    script.src='https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.19.1/zxing.min.js';
-    script.onload=()=>{
-      try{
-        const codeReader=new ZXing.BrowserMultiFormatReader();
-        codeReader.decodeFromVideoDevice(null,'kamera-video',(result,err)=>{
-          if(result&&!barkodBulunan){
-            barkodBulunan=true;
-            codeReader.reset();
-            kapatBarkod();
-            islemBarkod(result.getText());
-          }
-        });
-        document.getElementById('barkod-status').textContent='Hazır — barkodu çerçeveye tut';
-      }catch(e){
-        document.getElementById('barkod-status').textContent='Tarayıcı başlatılamadı';
+    // Arka kamerayı bul
+    let cameraId=cameras[cameras.length-1].id;
+    for(let c of cameras){
+      if(c.label&&(c.label.toLowerCase().includes('back')||c.label.toLowerCase().includes('rear')||c.label.toLowerCase().includes('arka'))){
+        cameraId=c.id;break;
       }
-    };
-    script.onerror=()=>{
-      document.getElementById('barkod-status').textContent='Tarayıcı yüklenemedi — internet bağlantısı gerekli';
-    };
-    document.head.appendChild(script);
+    }
+
+    html5QrCode.start(
+      cameraId,
+      {
+        fps:15,
+        qrbox:{width:250,height:150},
+        aspectRatio:window.innerWidth/window.innerHeight,
+        formatsToSupport:[
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.ITF,
+        ]
+      },
+      async(decodedText)=>{
+        if(!barkodAktif)return;
+        barkodAktif=false;
+        showToast('📷 Barkod okundu: '+decodedText);
+        await kapatBarkod();
+        await islemBarkod(decodedText);
+      },
+      ()=>{}
+    ).then(()=>{
+      document.getElementById('barkod-status').textContent='✓ Hazır — barkodu çerçeveye tut';
+    }).catch(err=>{
+      document.getElementById('barkod-status').textContent='Hata: '+err;
+    });
+
+  }).catch(err=>{
+    document.getElementById('barkod-status').textContent='Kamera izni gerekli: '+err;
+  });
+}
+
+async function kapatBarkod(){
+  barkodAktif=false;
+  if(html5QrCode){
+    try{await html5QrCode.stop();}catch(e){}
+    try{html5QrCode.clear();}catch(e){}
+    html5QrCode=null;
   }
-}
-
-function kapatBarkod(){
-  clearInterval(barkodInterval);
-  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
   document.getElementById('barkod-ekran').style.display='none';
-  document.getElementById('kamera-video').srcObject=null;
 }
 
-// ===== API SORGU =====
 async function islemBarkod(barcode){
   const yk=document.getElementById('yk');
   document.getElementById('yk-lbl').textContent='Barkod okundu!';
   document.getElementById('yk-sub').textContent=barcode+'\nOpen Food Facts sorgulanıyor...';
   yk.classList.add('show');
-
   try{
     const res=await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
     const data=await res.json();
     yk.classList.remove('show');
-
     if(data.status===1&&data.product){
-      const p=data.product;
-      const n=p.nutriments||{};
+      const p=data.product;const n=p.nutriments||{};
       const sonuc={
         isim:p.product_name_tr||p.product_name||'Bilinmeyen ürün',
-        marka:(p.brands||'')+(barcode?' · '+barcode:''),
-        kcal:Math.round(n['energy-kcal_100g']||n['energy-kcal']||0),
+        marka:(p.brands?p.brands+' · ':'')+barcode,
+        kcal:Math.round(n['energy-kcal_100g']||0),
         pro:Math.round((n.proteins_100g||0)*10)/10,
         karb:Math.round((n.carbohydrates_100g||0)*10)/10,
         yag:Math.round((n.fat_100g||0)*10)/10,
         kaynak:'openfood',ikon:'🏷️'
       };
-      bekleyenBesin=sonuc;
-      acSonucSheet(sonuc);
-    } else {
+      bekleyenBesin=sonuc;acSonucSheet(sonuc);
+    }else{
       showToast('Ürün bulunamadı — manuel giriş');
       setTimeout(()=>{
         ['m-isim','m-kcal','m-pro','m-karb','m-yag'].forEach(id=>document.getElementById(id).value='');
@@ -490,17 +456,16 @@ async function islemBarkod(barcode){
         document.getElementById('manuel-ov').classList.add('show');
       },400);
     }
-  } catch(e){
+  }catch(e){
     yk.classList.remove('show');
     showToast('Bağlantı hatası — manuel giriş');
     setTimeout(()=>document.getElementById('manuel-ov').classList.add('show'),400);
   }
 }
 
-// ===== SHEET =====
 function acSonucSheet(d){
-  const kaynakMap={'openfood':{r:'#1D9E75',l:'Open Food Facts'},'arama':{r:'#2B5BA8',l:'Veritabanı'},'manuel':{r:'#888780',l:'Manuel'}};
-  const k=kaynakMap[d.kaynak]||kaynakMap['arama'];
+  const km={'openfood':{r:'#1D9E75',l:'Open Food Facts'},'arama':{r:'#2B5BA8',l:'Veritabanı'}};
+  const k=km[d.kaynak]||{r:'#888780',l:'Manuel'};
   const el=document.getElementById('sonuc-kaynak');
   el.style.cssText=`background:${k.r}22;color:${k.r};border:.5px solid ${k.r};`;
   el.textContent='● '+k.l+'tan bulundu';
@@ -564,7 +529,7 @@ function renderEklenenler(){
   const topKcal=eklenmisBesins.reduce((a,b)=>a+b.kcal,0);
   const kr=k=>k==='openfood'?'#1D9E75':k==='manuel'?'#2B5BA8':'#888780';
   const kl=k=>k==='openfood'?'Open Food Facts':k==='manuel'?'Manuel':'Veritabanı';
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#F1EFE8;border-radius:10px;margin-bottom:12px;">
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;padding:10px 14px;background:#F1EFE8;border-radius:10px;margin-bottom:12px;align-items:center;">
     <span style="font-size:12px;color:#888780;font-weight:500;">Günlük toplam</span>
     <span style="font-size:18px;font-weight:600;">${topKcal} kcal</span>
   </div>`+
@@ -584,14 +549,12 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// Overlay kapat
 ['sonuc-ov','manuel-ov'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){
     if(e.target===this)this.classList.remove('show');
   });
 });
 
-// Başlat
 renderPlanlar();
 renderEklenenler();
 </script>
